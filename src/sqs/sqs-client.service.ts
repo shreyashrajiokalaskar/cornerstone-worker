@@ -1,24 +1,37 @@
-import { ChangeMessageVisibilityCommand, DeleteMessageCommand, Message, ReceiveMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
+import { ChangeMessageVisibilityCommand, DeleteMessageCommand, ListQueuesCommand, Message, ReceiveMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class SqsClientService {
     client: SQSClient;
     private queueUrl: string;
 
-    constructor() {
+    constructor(private config: ConfigService) {
         this.client = new SQSClient({
-            region: process.env['AWS_REGION'] as string,
-            credentials: {
-                accessKeyId: process.env['SQS_ACCESS_KEY_ID'] as string,
-                secretAccessKey: process.env['SQS_SECRET_ACCESS_KEY'] as string,
-            },
+            region: this.config.get('AWS_REGION') as string,
+            // credentials: {
+            //     accessKeyId: this.config.get('SQS_ACCESS_KEY_ID') as string,
+            //     secretAccessKey: this.config.get('SQS_SECRET_ACCESS_KEY') as string,
+            // },
+
         });
 
-        this.queueUrl = process.env['DOC_QUEUE_URL'] as string;
+        this.queueUrl = this.config.get('DOC_QUEUE_URL') as string;
 
 
-        console.log('SQS connected to:', this.queueUrl);
+        console.log('SQS connected to:', {
+            accessKeyId: this.config.get('SQS_ACCESS_KEY_ID') as string,
+            secretAccessKey: this.config.get('SQS_SECRET_ACCESS_KEY') as string,
+            region: this.config.get('AWS_REGION') as string,
+        });
+        this.checkConnection
+
+    }
+
+    async checkConnection() {
+        const data = await this.client.send(new ListQueuesCommand({}));
+        console.log("Connected successfully. Queues:", data.QueueUrls);
     }
 
     async receiveMessages(): Promise<Message[]> {

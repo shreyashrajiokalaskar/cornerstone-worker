@@ -21,8 +21,9 @@ export class SqsConsumerService implements OnModuleInit {
         while (true) {
             try {
                 const messages = await this.sqsClientService.receiveMessages();
-
+                this.logger.log(`Received ${messages.length} messages from SQS`);
                 for (const msg of messages) {
+                    this.logger.log(`Processing message ID: ${msg.MessageId}`);
                     await this.processMessage(msg);
                 }
             } catch (error) {
