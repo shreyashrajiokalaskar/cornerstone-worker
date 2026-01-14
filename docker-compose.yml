@@ -1,0 +1,4 @@
+services:
+  worker:
+    container_name: cornerstone-worker
+    build: .
