@@ -34,6 +34,26 @@ jobs:
             -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/cornerstone-worker:latest \
             --push .
 
+      - name: Generate Worker runtime env from SSM
+        run: |
+          cp worker.defaults.env worker.runtime.env
+
+          aws ssm get-parameters-by-path \
+            --path "/cornerstone/common" \
+            --with-decryption \
+            --query "Parameters[*].[Name,Value]" \
+            --output text \
+          | sed 's#.*/##' \
+          | awk '{print $1"="$2}' >> worker.runtime.env
+
+          aws ssm get-parameters-by-path \
+            --path "/cornerstone/worker" \
+            --with-decryption \
+            --query "Parameters[*].[Name,Value]" \
+            --output text \
+          | sed 's#.*/##' \
+          | awk '{print $1"="$2}' >> worker.runtime.env
+
       # Deploy on EC2
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1
